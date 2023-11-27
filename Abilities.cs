@@ -6,7 +6,6 @@ namespace Abilities
 {
     public class SpinningBall : MonoBehaviour
     {
-        private float _spinSpeed = 5.0f;
         private float _spinDuration = 1f;
         private float _spinTimer = 0.0f;
         private float _activeTimer = 0.0f;
