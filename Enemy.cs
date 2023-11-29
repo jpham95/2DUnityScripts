@@ -2,9 +2,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Algorithms.AStar;
+using Player;
+/*
+Path Storage: The path variable is an array of Vector3 objects that stores the
+path for each enemy instance. If there are thousands of instances, each with its
+own path, it could consume a significant amount of memory. Consider optimizing
+the path storage by using a more memory-efficient data structure or sharing
+paths among instances when possible.
 
+GameObject.FindWithTag: In the OnEnable method, GameObject.FindWithTag is used
+to find the player object. Calling this method frequently for thousands of
+instances can be inefficient. Consider caching the player object reference or
+finding it once and sharing it among instances.
+
+Coroutine Memory: The FollowPath coroutine is used to move the enemy along the
+path. If there are thousands of instances, each running its own coroutine, it
+can consume memory. Consider optimizing the coroutine usage or using a different
+approach for enemy movement.
+*/
 public class Enemy : MonoBehaviour
 {
+    public bool displayPathGizmos;
     private float _health = 100f;
     private float _damage = 10f;
     private float _speed = 1f;
@@ -33,7 +51,7 @@ public class Enemy : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    void Start()
+    private void Start()
     {
         currentTarget = _playerTransform.position;
     }
@@ -100,7 +118,7 @@ public class Enemy : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (path != null)
+        if (path != null && displayPathGizmos)
         {
             for (int i = targetIndex; i < path.Length; i++)
             {
@@ -126,7 +144,7 @@ public class Enemy : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (Vector3.Distance(currentTarget, _playerTransform.position) > 0.5f)
         {
@@ -134,5 +152,13 @@ public class Enemy : MonoBehaviour
             PathRequestManager.RequestPath(transform.position, _playerTransform.position, OnPathFound);
         }
 
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            // take damage
+        }
     }
 }

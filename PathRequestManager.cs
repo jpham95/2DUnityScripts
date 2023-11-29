@@ -48,7 +48,13 @@ public class PathRequestManager : MonoBehaviour
     {
         currentPathRequest.callback(path, success);
         isProcessingPath = false;
+        // add delay here
+        StartCoroutine(Delay());
         TryProcessNext();
+    }
+    private IEnumerator Delay()
+    {
+        yield return new WaitForSeconds(0.5f);
     }
     struct PathRequest
     {

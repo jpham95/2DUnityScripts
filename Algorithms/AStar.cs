@@ -26,6 +26,31 @@ loop
             if neighbour is not in OPEN
                 add neighbour to OPEN
 */
+
+/*
+MaxHeap: The MaxHeap data structure is used as a priority queue in the A*
+algorithm. If you have thousands of instances, each with its own MaxHeap, it
+could consume a significant amount of memory. Consider optimizing the MaxHeap
+implementation or exploring alternative data structures that have better memory
+efficiency.
+
+HashSet: The HashSet data structure is used as the closed set in the A*
+algorithm. Similar to the MaxHeap, if you have thousands of instances, each with
+its own HashSet, it could consume a significant amount of memory. Consider
+optimizing the HashSet implementation or exploring alternative data structures
+that have better memory efficiency.
+
+Grid: The AStarGrid class is used to represent the grid for pathfinding. If the
+grid size is large and you have thousands of instances, it could consume a
+significant amount of memory. Consider optimizing the grid representation or
+exploring alternative data structures that have better memory efficiency.
+
+Path and Waypoints: The path and waypoints lists are used to store the path and
+simplified path respectively. If you have thousands of instances and each
+instance has a long path, it could consume a significant amount of memory.
+Consider optimizing the path storage or exploring alternative data structures
+that have better memory efficiency.
+*/
 namespace Algorithms.AStar
 {
     public class AStarPathfinding : MonoBehaviour
