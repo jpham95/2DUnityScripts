@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DataStructures;
 /*
 OPEN = priority queue containing START
 CLOSED = empty set
@@ -29,73 +30,99 @@ namespace Algorithms.AStar
 {
     public class AStarPathfinding : MonoBehaviour
     {
+        private PathRequestManager requestManager;
         public Transform seeker, target;
         AStarGrid grid;
 
         private void Awake()
         {
             grid = GetComponent<AStarGrid>();
+            requestManager = GetComponent<PathRequestManager>();
         }
 
-        private void Update()
+        public void StartFindPath(Vector3 startPos, Vector3 targetPos)
         {
-            FindPath(seeker.position, target.position);
+            StartCoroutine(FindPath(startPos, targetPos));
         }
-        private void FindPath(Vector3 startPos, Vector3 targetPos)
+
+        private IEnumerator FindPath(Vector3 startPos, Vector3 targetPos)
         {
+            Vector3[] waypoints = new Vector3[0];
+            bool pathFound = false;
+
             Node startNode = grid.NodeFromWorldPoint(startPos);
             Node targetNode = grid.NodeFromWorldPoint(targetPos);
-
-            List<Node> openSet = new List<Node>();
-            HashSet<Node> closedSet = new HashSet<Node>();
-            openSet.Add(startNode);
-
-            while (openSet.Count > 0)
+            if (targetNode._isWalkable == false)
             {
-                Node currentNode = openSet[0];
-
-                // current = node in openSet with the lowest f_cost
-                for (int i = 1; i < openSet.Count; i++)
+                foreach (Node neighbour in grid.GetNeighbours(targetNode))
                 {
-                    if (openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
+                    if (neighbour._isWalkable && GetDistance(startNode, neighbour) < GetDistance(startNode, targetNode))
                     {
-                        currentNode = openSet[i];
-                    }
-                }
-
-                // remove current from OPEN
-                openSet.Remove(currentNode);
-                // add current to CLOSED
-                closedSet.Add(currentNode);
-
-                if (currentNode == targetNode)
-                {
-                    RetracePath(startNode, targetNode);
-                    return;
-                }
-
-                // foreach neighbour of the current node
-                foreach (Node neighbour in grid.GetNeighbours(currentNode))
-                {
-                    if (!neighbour._isWalkable || closedSet.Contains(neighbour))
-                    {
-                        continue;
-                    }
-
-                    int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
-                    if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
-                    {
-                        neighbour.gCost = newMovementCostToNeighbour;
-                        neighbour.hCost = GetDistance(neighbour, targetNode);
-                        neighbour.parent = currentNode;
-
-                        openSet.Add(neighbour);
-                    }
+                        targetNode = neighbour;
+                        break;
                     }
                 }
             }
+            if (startNode._isWalkable == false)
+            {
+                foreach (Node neighbour in grid.GetNeighbours(startNode))
+                {
+                    if (neighbour._isWalkable && GetDistance(neighbour, targetNode) < GetDistance(startNode, targetNode))
+                    {
+                        startNode = neighbour;
+                        break;
+                    }
+                }
+            }
+            if (startNode._isWalkable && targetNode._isWalkable)
+            {    
+                MaxHeap<Node> openSet = new MaxHeap<Node>(grid.MaxSize); // priority queue
+                HashSet<Node> closedSet = new HashSet<Node>(); // empty set
+                openSet.Add(startNode); // add the start node to OPEN
 
-        private void RetracePath(Node startNode, Node endNode)
+                while (openSet.Count > 0) 
+                {
+                    Node currentNode = openSet.Pop();
+                    closedSet.Add(currentNode);
+
+                    if (currentNode == targetNode)
+                    {
+                        pathFound = true;
+                        break;
+                    }
+
+                    // foreach neighbour of the current node
+                    foreach (Node neighbour in grid.GetNeighbours(currentNode))
+                    {
+                        // if neighbour is not traversable || neighbour is in CLOSED
+                        if (!neighbour._isWalkable || closedSet.Contains(neighbour))
+                        {
+                            continue; // skip to the next neighbour
+                        }
+                        // if new path to neighbour is shorter || neighbour is not in OPEN
+                        int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
+                        if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                        {
+                            // set costs of neighbour
+                            neighbour.gCost = newMovementCostToNeighbour;
+                            neighbour.hCost = GetDistance(neighbour, targetNode);
+                            // set parent of neighbour to current
+                            neighbour.parent = currentNode;
+                            // add neighbour to OPEN
+                            openSet.Add(neighbour);
+                        }
+                    }
+                }
+            }
+            yield return null; // wait for one frame before returning
+            if (pathFound)
+            {
+                waypoints = RetracePath(startNode, targetNode);
+            }
+            requestManager.FinishedProcessingPath(waypoints, pathFound);
+        }
+
+        private Vector3[] RetracePath(Node startNode, Node endNode)
         {
             List<Node> path = new List<Node>();
             Node currentNode = endNode;
@@ -105,10 +132,27 @@ namespace Algorithms.AStar
                 path.Add(currentNode);
                 currentNode = currentNode.parent;
             }
+            Vector3[] waypoints = SimplifyPath(path);
+            Array.Reverse(waypoints);
+            return waypoints;
 
-            path.Reverse();
+            // grid.path = path;
+        }
 
-            grid.path = path;
+        private Vector3[] SimplifyPath(List<Node> path)
+        {
+            List<Vector3> waypoints = new List<Vector3>();
+            Vector2 directionOld = Vector2.zero;
+            for (int i = 1; i < path.Count; i++)
+            {
+                Vector2 directionNew = new Vector2(path[i-1]._gridX - path[i]._gridX, path[i-1]._gridY - path[i]._gridY);
+                if (directionNew != directionOld)
+                {
+                    waypoints.Add(path[i]._worldPosition);
+                }
+                directionOld = directionNew;
+            }
+            return waypoints.ToArray();
         }
 
         private int GetDistance(Node nodeA, Node nodeB)
@@ -124,7 +168,7 @@ namespace Algorithms.AStar
             return 14 * dstX + 10 * (dstY - dstX);
         }
     }
-    public class Node
+    public class Node : IComparable<Node>
     {
         public bool _isWalkable;
         public Vector2 _worldPosition;
@@ -142,5 +186,17 @@ namespace Algorithms.AStar
             _gridX = gridX;
             _gridY = gridY;
         }
+
+        public int CompareTo(Node other)
+        {
+            int comparison = fCost.CompareTo(other.fCost);
+
+            if (comparison == 0)
+            {
+                comparison = hCost.CompareTo(other.hCost);
+            }
+            return -comparison;
+        }
+
     }
 }
