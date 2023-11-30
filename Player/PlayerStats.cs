@@ -13,8 +13,9 @@ namespace Player
         private static float _exp = 0f;
         private static float _nextLevelExp = 50f;
         private static int _level = 1;
+        private static float _pickupRadius = 1f;
 
-        private Dictionary<string, Ability> _playerAbilities = new Dictionary<string, Ability>();
+        private static Dictionary<string, Ability> _playerAbilities = new Dictionary<string, Ability>();
 
         private void Awake()
         {
@@ -28,12 +29,19 @@ namespace Player
                 // die
             }
 
+            foreach (Ability ability in _playerAbilities.Values)
+            {
+                ability.Update();
+            }
+
             // handle pickups
-            Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, 0.5f, LayerMask.GetMask("Pickup"));
+            Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, _pickupRadius, LayerMask.GetMask("Interactable"));
             foreach (Collider2D collider in colliders)
             {
-                GameObject gameObject = collider.GetComponent<GameObject>();
+                GameObject gameObject = collider.gameObject;
                 Interactable interactable = gameObject.GetComponent<Interactable>();
+                Debug.Log("Interacting with " + gameObject.name);
+                Debug.Log("Interactable: " + interactable);
                 if (interactable != null)
                 {
                     interactable.Interact(this);
@@ -60,15 +68,19 @@ namespace Player
         {
             // level up
         }
-
-        private void AddAbility(Ability ability)
+        public static bool AbilityExists(Ability ability)
+        {
+            return _playerAbilities.ContainsKey(ability.Name);
+        }
+        public static void AddAbility(Ability ability)
         {
             AbilityManager.AvailableAbilities.Remove(ability);
+            Debug.Log("Adding " + ability.Name + " to player abilities");
             _playerAbilities.Add(ability.Name, ability);
             _playerAbilities[ability.Name].Activate();
         }
 
-        private void RemoveAbility(Ability ability)
+        public static void RemoveAbility(Ability ability)
         {
             AbilityManager.AvailableAbilities.Add(ability);
             _playerAbilities[ability.Name].Deactivate();
