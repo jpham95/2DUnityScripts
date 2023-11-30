@@ -39,13 +39,14 @@ namespace Abilities
 
     public class SpinningBall : Ability
     {
-        private bool _projectileExists = false;
         private float _spinDuration = 1f;
         private float _spinTimer = 0.0f;
         private float _activeTimer = 0.0f;
         private float _activeDuration = 5.0f;
         private float _cooldownTimer = 0.0f;
         private float _cooldownDuration = 5.0f;
+        private float _damage = 10f;
+        private bool _projectileExists = false;
         private bool _isActive = false;
         private bool _isFading = false;
         private Vector2 _ballTransform;
@@ -59,7 +60,6 @@ namespace Abilities
 
         public override void Activate()
         {
-            Debug.Log("Activating Spinning Ball");
             CreateProjectile();
             _isActive = true;
         }
@@ -77,7 +77,6 @@ namespace Abilities
         {
             if (!_projectileExists)
             {
-                Debug.Log("Creating projectile");
                 // Set _playerRigidbody and projectilePrefab if they are null
                 if (_playerRigidbody == null)
                 {
@@ -86,8 +85,6 @@ namespace Abilities
                 if (projectilePrefab == null)
                 {
                     projectilePrefab = Resources.Load<GameObject>("SpinningBallProjectile");
-                    Debug.Log("Loaded projectile prefab");
-                    Debug.Log(projectilePrefab);
                 }
 
                 // Check if _projectileGameObject is null
