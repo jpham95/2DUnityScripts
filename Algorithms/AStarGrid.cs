@@ -55,14 +55,12 @@ public class AStarGrid : MonoBehaviour
         return _grid[x, y];
     }
 
-    // public List<Node> path;
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, gridWorldSize.y, 1));
 
         if (_grid != null && displayGridGizmos)
         {   
-            // Node playerNode = NodeFromWorldPoint(_Player.position);
             foreach (Node node in _grid)
             {
                 Gizmos.color = (node._isWalkable) ? Color.clear : Color.red;

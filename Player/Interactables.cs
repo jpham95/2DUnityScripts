@@ -4,6 +4,11 @@ namespace Player.Interactables
 {
     public abstract class Interactable : MonoBehaviour
     {
-        public abstract void Interact(PlayerStats player);
+        protected GameObject _player;
+        private void OnEnable()
+        {
+            _player = GameObject.FindWithTag("Player");
+        }
+        public abstract void Interact();
     }
 }

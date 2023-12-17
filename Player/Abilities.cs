@@ -14,9 +14,8 @@ namespace Abilities
         public static List<Ability> AvailableAbilities { get; private set; } = new List<Ability>();
         private void Awake()
         {
-            // Get all the types that derive from Ability
-            Abilities = Assembly.GetAssembly(typeof(Ability))
-                .GetTypes()
+            // Get all the types that derive from Ability and create an instance of each
+            Abilities = Assembly.GetAssembly(typeof(Ability)).GetTypes()
                 .Where(type => type.IsSubclassOf(typeof(Ability)))
                 .Select(type => (Ability)Activator.CreateInstance(type))
                 .ToList();
@@ -39,22 +38,16 @@ namespace Abilities
 
     public class SpinningBall : Ability
     {
-        private float _spinDuration = 1f;
-        private float _spinTimer = 0.0f;
-        private float _activeTimer = 0.0f;
-        private float _activeDuration = 5.0f;
-        private float _cooldownTimer = 0.0f;
-        private float _cooldownDuration = 5.0f;
-        private float _damage = 10f;
-        private bool _projectileExists = false;
-        private bool _isActive = false;
-        private bool _isFading = false;
+        private float _spinDuration = 1f, _spinTimer = 0f;
+        private float _activeTimer = 0.0f, _activeDuration = 5.0f;
+        private float _cooldownTimer = 0.0f, _cooldownDuration = 5.0f;
+        private float _damageRange = 0.5f, _damage = 10f;
+        private bool _projectileExists = false, _isActive = false, _isFading = false;
         private Vector2 _ballTransform;
-        public GameObject projectilePrefab;
+        public GameObject projectilePrefab, _projectileGameObject;
         private Transform _projectileTransform;
         private SpriteRenderer _projectileSprite;
         public Rigidbody2D _playerRigidbody;
-        private GameObject _projectileGameObject;
         private string _projectilePrefabPath = "Resources/SpinningBallProjectile";
         public override string Name { get; } = "Spinning Ball";
 
@@ -147,11 +140,16 @@ namespace Abilities
                 {
                     _projectileSprite.color = Color.white;
                     // Perform a CircleCast from the center of the projectile
-                    RaycastHit2D[] hits = Physics2D.CircleCastAll(position, 0.5f, Vector2.zero);
+                    HashSet<RaycastHit2D> hits = new HashSet<RaycastHit2D>(Physics2D.CircleCastAll(position, 0.5f, Vector2.zero));
                     // Handle the hits (e.g., apply damage, trigger events, etc.)
+
                     foreach (RaycastHit2D hit in hits)
                     {
-                        // Handle the hit here
+                        // Check if the hit object is an enemy
+                        if (hit.collider.gameObject.tag == "Enemy")
+                        {
+                            hit.collider.gameObject.GetComponent<Enemy>().TakeDamage(_damage);
+                        }
                     }
                 }
                 // Check if the spin duration has been reached

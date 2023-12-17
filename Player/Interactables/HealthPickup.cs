@@ -4,9 +4,9 @@ using Player.Interactables;
 public class HealthPickup : Interactable
 {
     public float healthAmount = 10f;
-    public override void Interact(PlayerStats player)
+    public override void Interact()
     {
-        PlayerStats.Heal(healthAmount);
+        _player.GetComponent<PlayerStats>().Heal(healthAmount);
         Destroy(gameObject);
     }
 }

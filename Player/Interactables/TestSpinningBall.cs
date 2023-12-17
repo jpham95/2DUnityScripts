@@ -5,12 +5,14 @@ using Player.Interactables;
 public class TestSpinningBall : Interactable
 {
     private SpinningBall test = new SpinningBall();
-    public override void Interact(PlayerStats player)
+    private PlayerStats _playerStats;
+    public override void Interact()
     {   
-        Debug.Log("Ability exists: " + PlayerStats.AbilityExists(test));
-        if (!PlayerStats.AbilityExists(test))
+        _playerStats = _player.GetComponent<PlayerStats>();
+        Debug.Log("Ability exists: " + _playerStats.AbilityExists(test));
+        if (!_playerStats.AbilityExists(test))
         {
-            PlayerStats.AddAbility(test);
+            _playerStats.AddAbility(test);
         }
         Destroy(gameObject);
     }
