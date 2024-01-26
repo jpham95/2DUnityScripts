@@ -75,6 +75,7 @@ public abstract class Enemy : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         currentTarget = _playerTransform.position;
         SetStats();
+        Enemies.Add(this);
     }
     protected abstract void SetStats();
     private void FixedUpdate()
@@ -101,7 +102,7 @@ public abstract class Enemy : MonoBehaviour
         {
             leaderTimer -= Time.deltaTime;
         }
-        if (leaderTimer <= 0)
+        if (leaderTimer <= 0 || Leader == null)
         {
             leaderTimer = leaderThreshold;
             SetLeader();
@@ -116,9 +117,13 @@ public abstract class Enemy : MonoBehaviour
                 PathRequestManager.ResetPath(transform.position, currentTarget, OnPathFound);
             }
         }
-        else
+        else if (Leader != null)
         {   
-            _rigidbody.AddForce((Leader.transform.position - transform.position).normalized * speed*3, ForceMode2D.Impulse);
+            _rigidbody.AddForce((Leader.transform.position - transform.position).normalized * speed*0.1f, ForceMode2D.Impulse);
+        }
+        else
+        {
+            _rigidbody.AddForce((currentTarget - transform.position).normalized * speed*3, ForceMode2D.Impulse);
         }
     }
     protected abstract void SpecialUpdate();
@@ -165,9 +170,9 @@ public abstract class Enemy : MonoBehaviour
     }
     public void TakeDamage(float damageAmount)
     {
-        DamageAnimation();
         if (damageTimer <= 0)
         {
+            _spriteRenderer.color = Color.white;
             health = Mathf.Max(health - damageAmount, 0);
             damageTimer = damageCooldown;
             if (verbose)
@@ -176,29 +181,25 @@ public abstract class Enemy : MonoBehaviour
             }
         }
     }
-    protected virtual void DamageAnimation()
-    {
-        if (damageTimer <= 0)
-        {
-            _spriteRenderer.color = Color.Lerp(_spriteRenderer.color, Color.white, 0.05f);
-        }
-        else
-        {
-            _spriteRenderer.color = Color.Lerp(_spriteRenderer.color, Color.clear, 0.05f);
-        }
-    }
 
     private static void SetLeader()
     {
         Enemy potentialLeader = null;
         foreach (Enemy enemy in Enemies)
-        {
-            if (potentialLeader == null || enemy.DistanceToPlayer < potentialLeader.DistanceToPlayer)
+        {   
+            if (potentialLeader != null && enemy.DistanceToPlayer < potentialLeader.DistanceToPlayer)
             {
                 potentialLeader = enemy;
+                Debug.Log("New Leader");
+            }
+            else if (potentialLeader == null)
+            {
+                potentialLeader = enemy;
+                Debug.Log("First Leader");
             }
         }
         potentialLeader.isLeader = true;
         Leader = potentialLeader;
+        Debug.Log("Leader is " + Leader);
     }
 }
